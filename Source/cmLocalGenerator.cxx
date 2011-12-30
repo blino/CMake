@@ -1431,14 +1431,20 @@ void cmLocalGenerator::GetIncludeDirectories(std::vector<std::string>& dirs,
     }
 
   // Construct the final ordered include directory list.
-  for(std::vector<std::string>::iterator i = includes.begin();
-      i != includes.end(); ++i)
-    {
-    if(emitted.insert(*i).second)
+  // Do it in two passes: normal include directories first, system include directories last
+  cmMakefile* mf = this->GetMakefile();
+  for (int insertSystem = 0; insertSystem <= 1; insertSystem++) {
+      for(std::vector<std::string>::iterator i = includes.begin();
+          i != includes.end(); ++i)
       {
-      dirs.push_back(*i);
+          if (mf->IsSystemIncludeDirectory(i->c_str()) != (insertSystem == 1))
+              continue;
+          if(emitted.insert(*i).second)
+          {
+              dirs.push_back(*i);
+          }
       }
-    }
+  }
 }
 
 void cmLocalGenerator::GetTargetFlags(std::string& linkLibs,
